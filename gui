@@ -1,0 +1,234 @@
+package gui;
+
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.io.IOException; 
+import java.nio.file.Files; 
+import java.nio.file.Path; 
+import java.nio.file.Paths; 
+import java.nio.file.StandardOpenOption; 
+ 
+public class Gui {
+    
+    
+
+    public static void main(String[] args) {
+        MyFrame f = new MyFrame();
+    }
+}
+
+class MyFrame extends JFrame implements ActionListener {
+
+    private Container c;
+    private JLabel title;
+    private JLabel name;
+    private JRadioButton whiteTurn;
+    private JRadioButton blackTurn;
+    private ButtonGroup turnGroup;
+    private JComboBox<String> specialMove;
+    private JComboBox<String> column;
+    private JComboBox<String> row;
+    private JComboBox<String> piece;
+    private JButton submitButton;
+    private JButton resetButton;
+    private JButton fileSubmit;;
+    private JTextArea outputArea;
+
+    private String[] specialMoves = {"", "Takes", "En Passant"};
+    private String[] columns = {"a", "b", "c", "d", "e", "f", "g", "h"};
+    private String[] rows = {"1", "2", "3", "4", "5", "6", "7", "8"};
+    private String[] pieces = {"King", "Queen", "Rook", "Knight", "Bishop", "Pawn"};
+    private ArrayList<String> moves = new ArrayList<>();
+
+    private int moveNumber = 1; // Initialize move counter
+
+    public MyFrame() {
+        setTitle("Chess Move Tracker");
+        setBounds(300, 90, 900, 600);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setResizable(false);
+
+        c = getContentPane();
+        c.setLayout(null);
+
+        title = new JLabel("Chess Move Tracker");
+        title.setFont(new Font("Arial", Font.PLAIN, 30));
+        title.setSize(300, 30);
+        title.setLocation(300, 30);
+        c.add(title);
+
+        name = new JLabel("Piece    Special    Location");
+        name.setFont(new Font("Arial", Font.PLAIN, 20));
+        name.setSize(400, 20);
+        name.setLocation(75, 225);
+        c.add(name);
+
+        JLabel turnLabel = new JLabel("Turn");
+        turnLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+        turnLabel.setSize(100, 20);
+        turnLabel.setLocation(100, 100);
+        c.add(turnLabel);
+
+        whiteTurn = new JRadioButton("White");
+        whiteTurn.setFont(new Font("Arial", Font.PLAIN, 15));
+        whiteTurn.setSelected(true);
+        whiteTurn.setSize(75, 20);
+        whiteTurn.setLocation(200, 100);
+        c.add(whiteTurn);
+
+        blackTurn = new JRadioButton("Black");
+        blackTurn.setFont(new Font("Arial", Font.PLAIN, 15));
+        blackTurn.setSize(80, 20);
+        blackTurn.setLocation(275, 100);
+        c.add(blackTurn);
+
+        turnGroup = new ButtonGroup();
+        turnGroup.add(whiteTurn);
+        turnGroup.add(blackTurn);
+
+        piece = new JComboBox<>(pieces);
+        piece.setFont(new Font("Arial", Font.PLAIN, 15));
+        piece.setSize(100, 20);
+        piece.setLocation(50, 250);
+        c.add(piece);
+
+        specialMove = new JComboBox<>(specialMoves);
+        specialMove.setFont(new Font("Arial", Font.PLAIN, 15));
+        specialMove.setSize(100, 20);
+        specialMove.setLocation(160, 250);
+        c.add(specialMove);
+
+        column = new JComboBox<>(columns);
+        column.setFont(new Font("Arial", Font.PLAIN, 15));
+        column.setSize(60, 20);
+        column.setLocation(270, 250);
+        c.add(column);
+
+        row = new JComboBox<>(rows);
+        row.setFont(new Font("Arial", Font.PLAIN, 15));
+        row.setSize(60, 20);
+        row.setLocation(340, 250);
+        row.setSelectedIndex(rows.length - 1);
+        c.add(row);
+
+        submitButton = new JButton("Submit");
+        submitButton.setFont(new Font("Arial", Font.PLAIN, 15));
+        submitButton.setSize(120, 20);
+        submitButton.setLocation(100, 300);
+        submitButton.addActionListener(this);
+        c.add(submitButton);
+
+        resetButton = new JButton("Reset");
+        resetButton.setFont(new Font("Arial", Font.PLAIN, 15));
+        resetButton.setSize(100, 20);
+        resetButton.setLocation(220, 300);
+        resetButton.addActionListener(this);
+        c.add(resetButton);
+        
+        fileSubmit = new JButton("Submit to File");
+        fileSubmit.setFont(new Font("Arial", Font.PLAIN, 15));
+        fileSubmit.setSize(200, 20);
+        fileSubmit.setLocation(110, 350);
+        fileSubmit.addActionListener(this);
+        c.add(fileSubmit);
+
+        outputArea = new JTextArea();
+        outputArea.setFont(new Font("Arial", Font.PLAIN, 15));
+        outputArea.setSize(420, 400);
+        outputArea.setLocation(440, 100);
+        outputArea.setLineWrap(true);
+        outputArea.setEditable(false);
+        c.add(outputArea);
+
+        setVisible(true);
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == resetButton) {
+            resetForm();
+        } 
+        else if (e.getSource() == submitButton) {
+            recordMove();
+        } 
+        else if (e.getSource() == fileSubmit) {
+            saveFile(String.join(",", moves));
+        }
+    }
+
+    private void resetForm() {
+        piece.setSelectedIndex(0);
+        specialMove.setSelectedIndex(0);
+        column.setSelectedIndex(0);
+        row.setSelectedIndex(rows.length - 1);
+        whiteTurn.setSelected(true);
+        moves.clear();
+        outputArea.setText("");
+        moveNumber = 1; // Reset move counter
+    }
+
+    private void recordMove() {
+        String turn;
+        if (whiteTurn.isSelected()) {
+            turn = "\n" + moveNumber + ".";
+        } else {
+            turn = ",";
+            moveNumber++; // Increment move number after Black's turn
+        }
+
+        String pieceType = (String) piece.getSelectedItem();
+        String special = (String) specialMove.getSelectedItem();
+        String col = (String) column.getSelectedItem();
+        String r = (String) row.getSelectedItem();
+
+        String move = turn + " " + pieceType + " " + special + " " + col + r;
+        moves.add(move);
+        updateOutput();
+        
+        
+    }
+    
+       public void saveFile(String inText) {
+       
+        // Creating an instance of file
+        Path path
+                = Paths.get("gfg.txt");
+
+        // Custom string as an input
+        String str
+                = inText;
+
+        // Try block to check for exceptions
+        try {
+            // Now calling Files.writeString() method
+            // with path , content & standard charsets
+            byte[] arr = str.getBytes();
+            Files.write(path, arr);
+            //Files.writeString(path, str,
+            //        StandardCharsets.UTF_8);
+
+        }
+
+        // Catch block to handle the exception
+        catch (IOException ex) {
+            // Print messqage exception occurred as
+            // invalid. directory local path is passed
+            System.out.print("Invalid Path");
+        }
+    }
+
+    
+
+    private void updateOutput() {
+        StringBuilder output = new StringBuilder();
+        for (String move : moves) {
+            output.append(move);
+        }
+        outputArea.setText(output.toString());
+    }
+}
